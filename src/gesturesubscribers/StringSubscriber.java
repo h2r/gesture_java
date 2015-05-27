@@ -14,6 +14,9 @@ public class StringSubscriber implements RosListenDelegate{
 		message += " " + map.get("data");
 		System.out.println(message);
 	}
+	synchronized public void reset(){
+		message = "";
+	}
 	/**
 	 * gets the most recent message and empties the message queue
 	 * @return the most recent string ("" if list is empty)

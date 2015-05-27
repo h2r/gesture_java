@@ -47,6 +47,12 @@ public class PointArraySubscriber implements RosListenDelegate{
 		right_arm_point[2] = cur.get(z);
 
 	}
+	public synchronized void reset(){
+		left_arm_origin = new double[1];
+		right_arm_origin = new double[1];
+		right_arm_point = new double[1];
+		left_arm_point = new double[1];
+	}
 	//goes lao, rao, lap, rap
 	public synchronized double[][] retrieveMostRecentNewMessage(){
 		double[][] arms = {left_arm_origin.clone(), right_arm_origin.clone(), left_arm_point.clone(), right_arm_point.clone()};

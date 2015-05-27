@@ -5,20 +5,20 @@
               directory with the processing instruction <?eclipse.ant.import?>
               as the first entry and export the buildfile again. --><project basedir="." default="build" name="gesture">
     <property environment="env"/>
+    <property name="ECLIPSE_HOME" value="../../../../../../usr/lib/eclipse"/>
     <property name="debuglevel" value="source,lines,vars"/>
     <property name="target" value="1.7"/>
     <property name="source" value="1.7"/>
     <path id="gesture.classpath">
         <pathelement location="bin"/>
-        <pathelement location="lib/burlap.jar"/>
-        <pathelement location="lib/burlap_rosbridge.jar"/>
-        <pathelement location="lib/java_rosbridge_all.jar"/>
+        <pathelement location="../burlap/dist/burlap.jar"/>
+        <pathelement location="../burlap_rosbridge/dist/burlap_rosbridge.jar"/>
+        <pathelement location="../java_rosbridge/dist/java_rosbridge_all.jar"/>
     </path>
     <target name="init">
         <mkdir dir="bin"/>
         <copy includeemptydirs="false" todir="bin">
             <fileset dir="src">
-                <exclude name="**/*.launch"/>
                 <exclude name="**/*.java"/>
             </fileset>
         </copy>
@@ -60,8 +60,28 @@
             <classpath refid="gesture.classpath"/>
         </java>
     </target>
+    <target name="PointArraySubscriber">
+        <java classname="gesturesubscribers.PointArraySubscriber" failonerror="true" fork="yes">
+            <classpath refid="gesture.classpath"/>
+        </java>
+    </target>
+    <target name="EinStateSubscriber">
+        <java classname="gesturesubscribers.EinStateSubscriber" failonerror="true" fork="yes">
+            <classpath refid="gesture.classpath"/>
+        </java>
+    </target>
     <target name="ObjectArraySubscriber">
         <java classname="gesturesubscribers.ObjectArraySubscriber" failonerror="true" fork="yes">
+            <classpath refid="gesture.classpath"/>
+        </java>
+    </target>
+    <target name="TFSubscriber">
+        <java classname="gesturesubscribers.TFSubscriber" failonerror="true" fork="yes">
+            <classpath refid="gesture.classpath"/>
+        </java>
+    </target>
+    <target name="Graphy2">
+        <java classname="mdpredux.Graphy2" failonerror="true" fork="yes">
             <classpath refid="gesture.classpath"/>
         </java>
     </target>
@@ -82,21 +102,6 @@
     </target>
     <target name="Graphy">
         <java classname="mdpredux.Graphy" failonerror="true" fork="yes">
-            <classpath refid="gesture.classpath"/>
-        </java>
-    </target>
-    <target name="Graphy2">
-        <java classname="mdpredux.Graphy2" failonerror="true" fork="yes">
-            <classpath refid="gesture.classpath"/>
-        </java>
-    </target>
-    <target name="TFSubscriber">
-        <java classname="gesturesubscribers.TFSubscriber" failonerror="true" fork="yes">
-            <classpath refid="gesture.classpath"/>
-        </java>
-    </target>
-    <target name="PointArraySubscriber">
-        <java classname="gesturesubscribers.PointArraySubscriber" failonerror="true" fork="yes">
             <classpath refid="gesture.classpath"/>
         </java>
     </target>

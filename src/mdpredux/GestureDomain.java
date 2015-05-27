@@ -1,6 +1,7 @@
 package mdpredux;
 
 import gesturesubscribers.BoolSubscriber;
+import gesturesubscribers.EinStateSubscriber;
 import gesturesubscribers.ObjectArraySubscriber;
 import gesturesubscribers.PointArraySubscriber;
 import gesturesubscribers.PointSubscriber;
@@ -56,8 +57,11 @@ public class GestureDomain implements DomainGenerator {
 	private static String OBJECTARRAYTYPE = "object_recognition_msgs/RecognizedObjectArray";
 	private static String OBJECTPOSTOPICLEFT = "/ein_left/blue_memory_objects";
 	private static String OBJECTPOSTOPICRIGHT = "/ein_right/blue_memory_objects";
-	//private static String OBJECTPOSTOPICRIGHT = "/test_objects";//, "object_recognition_msgs/RecognizedObjectArray", sub);
-
+	private static String EINRIGHTSTATETOPIC = "/ein_right/state";
+	private static String EINLEFTSTATETOPIC = "/ein_left/state";
+	private static String EINSTATEMSGTYPE = "ein/EinState";
+	private static String RESET = "RESET";
+	
 	private double transition_to_same = 0.9;
 	private String[] objects;
 	private StringSubscriber string_sub = new StringSubscriber();
@@ -66,8 +70,11 @@ public class GestureDomain implements DomainGenerator {
 	private Map<String, Map<String,Double>> unigram_probs;
 	private double epsilon; //for unigram...
 	private MultivariateNormalDistribution gesture_dist;
-	private ObjectArraySubscriber object_sub_left = new ObjectArraySubscriber();
-	private ObjectArraySubscriber object_sub_right = new ObjectArraySubscriber();
+	public ObjectArraySubscriber object_sub_left = new ObjectArraySubscriber();
+	public ObjectArraySubscriber object_sub_right = new ObjectArraySubscriber();
+	private EinStateSubscriber state_sub_right = new EinStateSubscriber();
+	private EinStateSubscriber state_sub_left = new EinStateSubscriber();
+	public MeldonAgent super_hack = null;
 	/**
 	 * 
 	 * @param objects - a list of object names
@@ -82,6 +89,8 @@ public class GestureDomain implements DomainGenerator {
 		this.bridge.subscribe(OBJECTPOSTOPICLEFT, OBJECTARRAYTYPE, object_sub_left);
 		this.bridge.subscribe(OBJECTPOSTOPICRIGHT, OBJECTARRAYTYPE, object_sub_right);
 		this.bridge.subscribe(POINTARRAYTOPIC, POINTARRAYMSGTYPE, body_pose_sub, 1, 1);
+		this.bridge.subscribe(EINRIGHTSTATETOPIC, EINSTATEMSGTYPE, state_sub_right, 1, 1);
+		this.bridge.subscribe(EINLEFTSTATETOPIC, EINSTATEMSGTYPE, state_sub_left, 1, 1);
 		double[] mean = {0.0};
 		double[][] variance = {{0.35}};
 		gesture_dist = new MultivariateNormalDistribution(mean, variance);
@@ -96,6 +105,8 @@ public class GestureDomain implements DomainGenerator {
 		this.bridge.subscribe(OBJECTPOSTOPICLEFT, OBJECTARRAYTYPE, object_sub_left);
 		this.bridge.subscribe(OBJECTPOSTOPICRIGHT, OBJECTARRAYTYPE, object_sub_right);
 		this.bridge.subscribe(POINTARRAYTOPIC, POINTARRAYMSGTYPE, body_pose_sub, 1, 1);
+		this.bridge.subscribe(EINRIGHTSTATETOPIC, EINSTATEMSGTYPE, state_sub_right, 1, 1);
+		this.bridge.subscribe(EINLEFTSTATETOPIC, EINSTATEMSGTYPE, state_sub_left, 1, 1);
 		double[] mean = {0.0};
 		double[][] variance = {{0.35}};
 		gesture_dist = new MultivariateNormalDistribution(mean, variance);
@@ -188,6 +199,8 @@ public class GestureDomain implements DomainGenerator {
 		obs_class.addAttribute(left_arm_point);
 		obs_class.addAttribute(right_arm_point);
 		obs_class.addAttribute(speech);
+		//hack
+		obs_class.addAttribute(new Attribute(domain, RESET, AttributeType.BOOLEAN));
 		
 		new WaitingAction(domain, this.transition_to_same);
 		new MultimodalObservations(domain, this.epsilon);
@@ -268,7 +281,7 @@ public class GestureDomain implements DomainGenerator {
 	
 	public class MultimodalObservations extends ObservationFunction{
 		private double epsilon;
-		
+		int num_objects = 0;
 		public MultimodalObservations(PODomain domain, double epsilon){
 			super(domain);
 			this.epsilon = epsilon;
@@ -287,6 +300,25 @@ public class GestureDomain implements DomainGenerator {
 		public State sampleRealWorldObservation(State state, GroundedAction action){
 			State obs = new State();
 			ObjectInstance obR = new ObjectInstance(this.domain.getObjectClass(OBSERVATIONCLASS), OBSERVATIONCLASS);
+			if(state_sub_right.getPatrolState().equals("IDLING") && state_sub_left.getPatrolState().equals("IDLING")){
+				obR.setValue(RESET, false);
+			}else{
+				obR.setValue(RESET, true);
+				if(super_hack != null) super_hack.resetBelief();
+				body_pose_sub.reset();
+				string_sub.reset();
+				while(!(state_sub_right.getPatrolState().equals("IDLING") && state_sub_left.getPatrolState().equals("IDLING"))){
+					System.out.println("waiting for ein to idle. current state right: " + state_sub_right.getPatrolState() + " current state left:" + state_sub_left.getPatrolState());
+					try {
+						Thread.sleep(1000);
+					} catch (InterruptedException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
+				}
+			}
+			
+			
 			obR.setValue(SPEECHOBS, string_sub.retrieveMostRecentNewMessage());
 			double[][] positions = body_pose_sub.retrieveMostRecentNewMessage();
 			/*if(positions[0] == null  || positions[1] == null || positions[2] == null || positions[3] == null){
@@ -306,6 +338,7 @@ public class GestureDomain implements DomainGenerator {
 				object_sub_right.retrieveMostRecentNewMessage(object_coords);
 				if(object_coords.isEmpty()) System.out.println("Waiting for object locations");
 			}
+			num_objects = object_coords.size();
 			for(String s : objects){
 				if(object_coords.containsKey(s)){
 					obR.setValue(GestureDomain.getObjectAttributeFromName(s),object_coords.get(s).toArray());
@@ -323,9 +356,11 @@ public class GestureDomain implements DomainGenerator {
 				GroundedAction action) {
 			String speech_obs = observation.getFirstObjectOfClass(OBSERVATIONCLASS).getStringValForAttribute(SPEECHOBS);
 			String object_val = state.getFirstObjectOfClass(DESIREDOBJECTCLASS).getStringValForAttribute(OBJECTATTRIBUTE);
+			boolean reset = observation.getFirstObjectOfClass(OBSERVATIONCLASS).getBooleanValue(RESET);
 			if(!observation.getFirstObjectOfClass(OBSERVATIONCLASS).getBooleanValue(GestureDomain.getObjectValidAttributeFromName(object_val))){
 				return 0.0;
 			}
+			if(reset) return 0.25;
 			double prob = 1.0;
 			String[] words = speech_obs.split("\\s+");
 			if(!unigram_probs.containsKey(object_val)) unigram_probs.put(object_val, new HashMap<String, Double>()); //new object that you can only point at 
