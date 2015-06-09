@@ -1,0 +1,29 @@
+cmd "1. Launch rosbridge" {
+    exec = "roslaunch rosbridge_server rosbridge_websocket.launch";
+    host = "apollo";
+}
+cmd "7. Launch Bayes Filter" {
+    exec = "bash -c \"/usr/lib/jvm/java-7-openjdk-amd64/bin/java -Didea.launcher.port=7535 -Didea.launcher.bin.path=/home/meldon/idea-IC-141.1010.3/bin -Dfile.encoding=UTF-8 -classpath /home/meldon/catkin_ws/src/gesture_java/gesture/bin:/usr/lib/jvm/java-7-openjdk-amd64/jre/lib/resources.jar:/usr/lib/jvm/java-7-openjdk-amd64/jre/lib/javazic.jar:/usr/lib/jvm/java-7-openjdk-amd64/jre/lib/rt.jar:/usr/lib/jvm/java-7-openjdk-amd64/jre/lib/charsets.jar:/usr/lib/jvm/java-7-openjdk-amd64/jre/lib/jsse.jar:/usr/lib/jvm/java-7-openjdk-amd64/jre/lib/compilefontconfig.jar:/usr/lib/jvm/java-7-openjdk-amd64/jre/lib/management-agent.jar:/usr/lib/jvm/java-7-openjdk-amd64/jre/lib/rhino.jar:/usr/lib/jvm/java-7-openjdk-amd64/jre/lib/jce.jar:/usr/lib/jvm/java-7-openjdk-amd64/jre/lib/ext/java-atk-wrapper.jar:/usr/lib/jvm/java-7-openjdk-amd64/jre/lib/ext/dnsns.jar:/usr/lib/jvm/java-7-openjdk-amd64/jre/lib/ext/sunpkcs11.jar:/usr/lib/jvm/java-7-openjdk-amd64/jre/lib/ext/sunjce_provider.jar:/usr/lib/jvm/java-7-openjdk-amd64/jre/lib/ext/localedata.jar:/usr/lib/jvm/java-7-openjdk-amd64/jre/lib/ext/icedtea-sound.jar:/usr/lib/jvm/java-7-openjdk-amd64/jre/lib/ext/zipfs.jar:/home/meldon/catkin_ws/src/gesture_java/burlap/dist/burlap.jar:/home/meldon/catkin_ws/src/gesture_java/burlap_rosbridge/dist/burlap_rosbridge.jar:/home/meldon/catkin_ws/src/gesture_java/java_rosbridge/dist/java_rosbridge_all.jar:/home/meldon/catkin_ws/src/gesture_java/gesture/lib/freetts.jar:/home/meldon/catkin_ws/src/gesture_java/gesture/lib/mbrola.jar:/home/meldon/catkin_ws/src/gesture_java/gesture/lib/jcommon-1.0.23.jar:/home/meldon/catkin_ws/src/gesture_java/gesture/lib/jfreechart-1.0.19.jar:/home/meldon/idea-IC-141.1010.3/lib/idea_rt.jar com.intellij.rt.execution.application.AppMain mdpredux.MDP\"";
+    host = "apollo";
+}
+cmd "2. Remap Ein Coordinates" {
+    exec = "rosrun coordinate_publisher coordinate_remap.py";
+    host = "apollo";
+}
+cmd "4. Launch Face Server" {
+    exec = "bash -c \"rosrun baxter_face_animation animator_server.py\"";
+    host = "apollo";
+}
+cmd "5. Launch Head Movement Server" {
+    exec = "rosrun baxter_face_animation animator_server_eyeGaze_david.py";
+    host = "apollo";
+}
+cmd "6. Build Bayes Filter" {
+    exec = "bash -c \"ant -f ~/catkin_ws/src/gesture_java/gesture/gesture.xml\"";
+    host = "apollo";
+}
+cmd "3. Launch Speech (must hit shield in chrome window)" {
+    exec = "rosrun coordinate_publisher speech_launch.sh";
+    host = "apollo";
+}
+
