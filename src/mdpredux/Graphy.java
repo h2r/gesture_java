@@ -28,7 +28,7 @@ public class Graphy {
 			for(int i = 0; i<labels.length; i++){
 				toadd = new JPanel();
 				if(0.98-(j*.02) <= probs[i]){
-					toadd.setBackground(Color.RED);
+					toadd.setBackground(Color.BLUE);
 				}
 				frame.getContentPane().add(toadd);
 			}

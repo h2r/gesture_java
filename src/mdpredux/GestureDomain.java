@@ -75,6 +75,7 @@ public class GestureDomain implements DomainGenerator {
 	private EinStateSubscriber state_sub_right = new EinStateSubscriber();
 	private EinStateSubscriber state_sub_left = new EinStateSubscriber();
 	public MeldonAgent super_hack = null;
+	public boolean waiting = false;
 	/**
 	 * 
 	 * @param objects - a list of object names
@@ -300,14 +301,14 @@ public class GestureDomain implements DomainGenerator {
 		public State sampleRealWorldObservation(State state, GroundedAction action){
 			State obs = new State();
 			ObjectInstance obR = new ObjectInstance(this.domain.getObjectClass(OBSERVATIONCLASS), OBSERVATIONCLASS);
-			if(state_sub_right.getPatrolState().equals("IDLING") && state_sub_left.getPatrolState().equals("IDLING")){
+			if(state_sub_right.getPatrolState().equals("IDLING") || state_sub_left.getPatrolState().equals("IDLING")){
 				obR.setValue(RESET, false);
 			}else{
 				obR.setValue(RESET, true);
 				if(super_hack != null) super_hack.resetBelief();
 				body_pose_sub.reset();
 				string_sub.reset();
-				while(!(state_sub_right.getPatrolState().equals("IDLING") && state_sub_left.getPatrolState().equals("IDLING"))){
+				while(!(state_sub_right.getPatrolState().equals("IDLING") || state_sub_left.getPatrolState().equals("IDLING"))){
 					System.out.println("waiting for ein to idle. current state right: " + state_sub_right.getPatrolState() + " current state left:" + state_sub_left.getPatrolState());
 					try {
 						Thread.sleep(1000);
@@ -336,7 +337,15 @@ public class GestureDomain implements DomainGenerator {
 			while(object_coords.isEmpty()){
 				object_sub_left.retrieveMostRecentNewMessage(object_coords);
 				object_sub_right.retrieveMostRecentNewMessage(object_coords);
-				if(object_coords.isEmpty()) System.out.println("Waiting for object locations");
+				if(object_coords.isEmpty()) {
+                    if (waiting == false) {
+                        waiting = true;
+                        System.out.println("Waiting for object locations");
+                    }
+                }
+                else {
+                    waiting = false;
+                }
 			}
 			num_objects = object_coords.size();
 			for(String s : objects){
